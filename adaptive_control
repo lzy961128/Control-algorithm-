@@ -1,0 +1,67 @@
+% Parameter definition
+setpoint = 60; % set temperature
+initial_temp = 35; % intial temperature
+
+dt = 1; % time step （s）
+t_end = 300; % time（s）
+time = 0:dt:t_end; % time vector
+
+n = length(time); % time steps
+
+% parameters of the model
+A = 0.001; % Dynamic model parameters of the system
+B = 0.1; % input gain
+K = 1; % Reference model gain
+adaptive_gain = 0.1; % adaptive gain
+
+% initial state
+current_temp = initial_temp;
+adaptive_param = 1; % initial adaptive parameters
+
+% temperature and control signal
+temp = zeros(1, n);
+control_signal = zeros(1, n);
+
+for i = 1:n
+    % error of calculating
+    error = setpoint - current_temp;
+
+    % Reference model output
+    ref_model_output = K * error;
+
+    % Control signal calculation
+    control_signal(i) = adaptive_param * ref_model_output;
+    if current_temp>setpoint
+        % System status update
+        current_temp = current_temp - (B * control_signal(i) + A * current_temp) * dt;
+    else
+        current_temp = current_temp + (B * control_signal(i) + A * current_temp) * dt;
+    end
+
+    % current_temp = current_temp - (B * control_signal(i) + A * current_temp) * dt;
+
+    % storage temperature
+    temp(i) = current_temp;
+
+    % update adaptive parameter
+    adaptive_param = adaptive_param + adaptive_gain * (error - (B * control_signal(i)));
+end
+
+% Draw the result chart
+figure;
+subplot(2,1,1);
+plot(time, temp, 'b-', 'LineWidth', 2);
+hold on;
+plot(time, setpoint * ones(1, n), 'r--', 'LineWidth', 2);
+xlabel('Time (s)');
+ylabel('Temperature (°C)');
+title('Temperature with Adaptive Control');
+legend('Temperature', 'Setpoint');
+grid on;
+
+subplot(2,1,2);
+plot(time, control_signal, 'g-', 'LineWidth', 2);
+xlabel('Time (s)');
+ylabel('Control Signal');
+title('Control Signal Over Time');
+grid on;
