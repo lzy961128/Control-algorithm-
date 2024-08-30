@@ -1,0 +1,93 @@
+​
+% PID 控制器参数  
+Kp = 44.0; % 比例系数  
+Ki = 0.5; % 积分系数  
+Kd = 0.1; % 微分系数  
+      
+% 离散PID 变量  
+prev_error = 0;  
+integral = 0;  
+      
+% 模拟参数  
+dt = 1; % 时间步长（秒）  
+t_final = 3600; % 模拟总时间（秒），例如1小时  
+t = 0:dt:t_final-dt; % 时间向量  
+      
+% 假设的室内温度（初始值）  
+room_temp = 26; % 摄氏度  
+      
+% 设定温度（用户希望达到的温度）  
+set_temp = 60; % 摄氏度  
+      
+% PID 控制器的输出（假设为加热/制冷功率）  
+pid_output = zeros(size(t));  
+      
+% 误差（设定温度与实际温度之差）  
+error = zeros(size(t));  
+      
+% 假设的空调系统的响应（一阶系统）  
+tau = 120; % 时间常数（秒），代表系统响应速度  
+      
+% 模拟循环  
+for k = 2:length(t)  
+    % 计算误差  
+    error(k) = set_temp - room_temp(k-1);  
+          
+    % PID 计算  
+    p = Kp * error(k);  
+    i = Ki * integral;  
+    if k > 1  
+        de = (error(k) - prev_error) / dt; % 微分项  
+        d = Kd * de;  
+    else  
+        d = 0; % 初始时刻没有微分项  
+    end  
+          
+    % 控制器输出（加热/制冷功率）  
+    pid_output(k) = p + i + d;  
+          
+    % 更新积分项  
+    integral = integral + error(k) * dt;  
+          
+    % 限制PID输出（可选，防止过度加热/制冷）  
+    pid_output(k) = max(min(pid_output(k), 100), -100); % 假设最大/最小功率为±100（单位可以是%）  
+          
+    % 模拟空调系统的响应（一阶系统）  
+    room_temp_change = pid_output(k) * dt / tau; % 温度变化量  
+    room_temp(k) = room_temp(k-1) + room_temp_change; % 更新室内温度  
+          
+    % 更新误差以供下一次迭代使用  
+    prev_error = error(k);  
+end  
+      
+% 绘制结果  
+figure;  
+subplot(2,1,1);  
+plot(t, set_temp * ones(size(t)), 'r--', t, room_temp, 'b');  
+title('PID Control of Air Conditioning System - Temperature');  
+xlabel('Time (s)');  
+ylabel('Temperature (°C)');  
+legend('Set Temperature', 'Room Temperature');  
+grid on;  
+      
+subplot(2,1,2);  
+plot(t, pid_output);  
+title('Control Signal (Heating/Cooling Power) Over Time');  
+xlabel('Time (s)');  
+ylabel('Control Signal (units)');  
+grid on;  
+      
+% 输出最终温度误差  
+final_error = error(end);  
+fprintf('Final Temperature Error: %.2f °C\n', final_error);  
+      
+% 清除变量（可选，为了保持工作空间整洁）  
+clearvars -except t set_temp room_temp error pid_output prev_error integral Kp Ki Kd dt t_final tau      
+
+[点击并拖拽以移动]
+​
+航空航天: 自适应控制用于飞行器的自动驾驶、姿态控制等。
+机器人: 用于机器人手臂的精准控制、轨迹跟踪等。
+汽车: 应用于自动驾驶系统、车辆稳定性控制等。
+工业自动化: 自适应控制用于生产过程中的质量控制和优化。
+自适应控制算法在处理系统不确定性和变化方面具有很强的能力，但其设计和实现也可能相对复杂，需要对系统的动态特性有较深刻的理解。
